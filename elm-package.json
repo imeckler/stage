@@ -4,11 +4,10 @@
     "repository": "https://github.com/imeckler/psignal.git",
     "license": "BSD3",
     "source-directories": [
-        ".",
-        "Native"
+        "."
     ],
     "native-modules": true,
-    "exposed-modules": ["PSignal"],
+    "exposed-modules": ["Stage", "Stage.Infix"],
     "dependencies": {
         "elm-lang/core": "1.1.0 <= v < 2.0.0"
     }
