@@ -1,14 +1,14 @@
 {
     "version": "1.0.0",
-    "summary": "helpful summary of your project, less than 80 characters",
-    "repository": "https://github.com/USER/PROJECT.git",
+    "summary": "Utilities for sequencing functions of time to create animations.",
+    "repository": "https://github.com/imeckler/psignal.git",
     "license": "BSD3",
     "source-directories": [
         ".",
         "Native"
     ],
     "native-modules": true,
-    "exposed-modules": [],
+    "exposed-modules": ["PSignal"],
     "dependencies": {
         "elm-lang/core": "1.1.0 <= v < 2.0.0"
     }
