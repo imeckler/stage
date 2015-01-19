@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
     "summary": "Utilities for sequencing functions of time to create animations.",
-    "repository": "https://github.com/imeckler/psignal.git",
+    "repository": "https://github.com/imeckler/stage.git",
     "license": "BSD3",
     "source-directories": [
         "."
