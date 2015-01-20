@@ -6,7 +6,7 @@
     "source-directories": [
         "."
     ],
-    "native-modules": true,
+    "native-modules": false,
     "exposed-modules": ["Stage", "Stage.Infix"],
     "dependencies": {
         "elm-lang/core": "1.1.0 <= v < 2.0.0"

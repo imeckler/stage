@@ -37,10 +37,9 @@ import Signal
 import Time(Time)
 import Time
 import Debug
-import Native.StageUtil
 
 modFloat : Float -> Float -> Float
-modFloat = Native.StageUtil.modFloat
+modFloat x m = x - m * toFloat (floor (x / m))
 
 type Duration = ForATime Time | Forever
 
