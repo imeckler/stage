@@ -16,6 +16,19 @@ module Stage
 
 {-| A type and functions on it for building up values as a function of time.
 
+A `Stage t a` is essentially a function `f : Time -> a` with
+an associated duration `dur` which indicates that `f` is
+meant to be considered as a function on the
+time interval [0, dur].
+
+The first type paramater `t` is `ForATime` if that duration
+is some finite time and is `Forever` if `f` is to be considered
+a total function.
+
+As an example, we might have a value 
+`circlePos : Stage ForATime (Float, Float)` indicating the position
+of a circle in an animation.
+
 # Formation
 @docs Stage, ForATime, Forever
 
@@ -58,7 +71,9 @@ of a circle in an animation.
 -}
 type Stage t a = Stage Duration (Time -> a)
 
+{-| A tag type indicating that a `Stage` is defined everywhere -}
 type Forever = ForeverDummy
+{-| A tag type indicating that a `Stage` is defined on some bounded interval. -}
 type ForATime = ForATimeDummy
 
 {-| Create a total `Stage`, defined on all times. -}
