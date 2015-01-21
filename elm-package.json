@@ -1,13 +1,15 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "summary": "Utilities for sequencing functions of time to create animations.",
     "repository": "https://github.com/imeckler/stage.git",
     "license": "BSD3",
     "source-directories": [
         "."
     ],
-    "native-modules": false,
-    "exposed-modules": ["Stage", "Stage.Infix"],
+    "exposed-modules": [
+        "Stage",
+        "Stage.Infix"
+    ],
     "dependencies": {
         "elm-lang/core": "1.1.0 <= v < 2.0.0"
     }
