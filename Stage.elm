@@ -6,6 +6,7 @@ module Stage
   , for
   , stayFor
   , stayForever
+  , sustain
   , dilate
   , cycle
   , map
@@ -36,7 +37,7 @@ of a circle in an animation.
 @docs forever, for, stayFor, stayForever
 
 # Transformation
-@docs dilate, cycle, map
+@docs dilate, cycle, sustain, map
 
 # Composition
 @docs followedBy, chainTo
@@ -123,6 +124,10 @@ cycle (Stage dur f) =
 map : (a -> b) -> Stage t a -> Stage t b
 map g (Stage dur f) = Stage dur (g << f)
 
+sustain : Stage ForATime a -> Stage Forever a
+sustain st = case st of
+  Stage (ForATime d) f -> st `followedBy` forever (f d)
+
 mkF d1 f1 f2 =
   \t -> if t <= d1 then f1 t else f2 (t - d1)
 
@@ -162,4 +167,20 @@ chainTo (Stage dur f) g =
 `Signal Time`. -}
 run : Signal (Stage Forever a) -> Signal Time -> Signal a
 run s ts = Signal.map2 (\(t0, Stage _ f) t -> f (t - t0)) (Time.timestamp s) ts
+
+type EntToEndUpdate a = CTime Time | CStage (Stage ForATime a)
+endToEnd : Stage Forever a -> Signal (Stage ForATime a) -> Signal Time -> Signal a
+endToEnd (Stage _ gap) =
+  let update u (x, t0, s, stages) =
+        let Stage (ForATime d) f = s in
+        case u of
+          CTime t -> if t - t0 <= d then (f t, t0, s, stages) else case Queue.pop stages of
+            Nothing            -> (gap t, t0, s, Queue.empty)
+            Just (s', stages') -> let Stage _ f = s' in (f t, t, s', stages')
+          CStage s' -> (x, t0, s, Queue.push s' stages) -- should really filter out this event
+  in
+  \ss ts ->
+    Signal.foldp update (gap 0, for 0 gap {-dummy args-}, 0, Queue.empty)
+      (Signal.merge (Signal.map CStage ss) (Signal.map CTime ts))
+    |> Signal.map (\(x,_,_,_) -> x)
 
