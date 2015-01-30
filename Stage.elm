@@ -1,4 +1,4 @@
-module Stage 
+module Stage
   ( Stage
   , ForATime
   , Forever
@@ -14,6 +14,8 @@ module Stage
   , chainTo
   , run
   ) where
+
+import Queue
 
 {-| A type and functions on it for building up values as a function of time.
 
@@ -126,7 +128,7 @@ map g (Stage dur f) = Stage dur (g << f)
 
 sustain : Stage ForATime a -> Stage Forever a
 sustain st = case st of
-  Stage (ForATime d) f -> st `followedBy` forever (f d)
+  Stage (ForATime d) f -> st `followedBy` stayForever (f d)
 
 mkF d1 f1 f2 =
   \t -> if t <= d1 then f1 t else f2 (t - d1)
@@ -172,15 +174,15 @@ type EntToEndUpdate a = CTime Time | CStage (Stage ForATime a)
 endToEnd : Stage Forever a -> Signal (Stage ForATime a) -> Signal Time -> Signal a
 endToEnd (Stage _ gap) =
   let update u (x, t0, s, stages) =
-        let Stage (ForATime d) f = s in
+        let (Stage (ForATime d) f) = s in
         case u of
-          CTime t -> if t - t0 <= d then (f t, t0, s, stages) else case Queue.pop stages of
+          CTime t -> if t - t0 < d then (f t, t0, s, stages) else case Queue.pop stages of
             Nothing            -> (gap t, t0, s, Queue.empty)
-            Just (s', stages') -> let Stage _ f = s' in (f t, t, s', stages')
+            Just (s', stages') -> let (Stage _ g) = s' in (g t, t, s', stages')
           CStage s' -> (x, t0, s, Queue.push s' stages) -- should really filter out this event
   in
   \ss ts ->
-    Signal.foldp update (gap 0, for 0 gap {-dummy args-}, 0, Queue.empty)
+    Signal.foldp update (gap 0, 0, for 0 gap, Queue.empty) {-dummy args-}
       (Signal.merge (Signal.map CStage ss) (Signal.map CTime ts))
     |> Signal.map (\(x,_,_,_) -> x)
 
