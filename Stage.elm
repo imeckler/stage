@@ -15,8 +15,6 @@ module Stage
   , run
   ) where
 
-import Queue
-
 {-| A type and functions on it for building up values as a function of time.
 
 A `Stage t a` is essentially a function `f : Time -> a` with
@@ -49,6 +47,7 @@ of a circle in an animation.
 
 -}
 
+import Queue
 import Signal
 import Time(Time)
 import Time
