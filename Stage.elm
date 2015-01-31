@@ -103,7 +103,7 @@ stayForever x = forever (\_ -> x)
 
 {-| Get the last value the `Stage` takes on. -}
 finalValue : Stage ForATime a -> a
-finalValue (Stage dur f) = f dur
+finalValue (Stage (ForATime d) f) = f d
 
 {-| Speed up or slow down time by the given factor. E.g.,
 
