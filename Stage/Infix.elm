@@ -1,6 +1,7 @@
 module Stage.Infix
   ( (<>)
   , (+>)
+  , (>+>)
   ) where
 {-| Infix synonyms. 
 # Operators
