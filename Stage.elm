@@ -13,6 +13,7 @@ module Stage
   , followedBy
   , chainTo
   , run
+  , finalValue
   ) where
 
 {-| A type and functions on it for building up values as a function of time.
@@ -43,7 +44,7 @@ of a circle in an animation.
 @docs followedBy, chainTo
 
 # Elimination
-@docs run
+@docs finalValue, run
 
 -}
 
@@ -100,6 +101,9 @@ stayFor dur x = for dur (\_ -> x)
 stayForever : a -> Stage Forever a
 stayForever x = forever (\_ -> x)
 
+{-| Get the last value the `Stage` takes on. -}
+finalValue : Stage ForATime a -> a
+finalValue (Stage dur f) = f dur
 
 {-| Speed up or slow down time by the given factor. E.g.,
 
@@ -126,8 +130,7 @@ map : (a -> b) -> Stage t a -> Stage t b
 map g (Stage dur f) = Stage dur (g << f)
 
 sustain : Stage ForATime a -> Stage Forever a
-sustain st = case st of
-  Stage (ForATime d) f -> st `followedBy` stayForever (f d)
+sustain st = st `followedBy` stayForever (finalValue st)
 
 mkF d1 f1 f2 =
   \t -> if t <= d1 then f1 t else f2 (t - d1)
