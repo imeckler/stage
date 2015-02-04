@@ -1,9 +1,9 @@
 module Stage.Internal where
 
-import Time (Time)
-
 {-| Internal implementation of Stage if you need access to it.
     This is all subject to change. -}
+
+import Time (Time)
 
 type Duration = ForATime Time | Forever
 
