@@ -14,6 +14,7 @@ module Stage
   , chainTo
   , run
   , finalValue
+  , endToEnd
   ) where
 
 {-| A type and functions on it for building up values as a function of time.
@@ -173,6 +174,10 @@ run : Signal (Stage Forever a) -> Signal Time -> Signal a
 run s ts = Signal.map2 (\(t0, Stage _ f) t -> f (t - t0)) (Time.timestamp s) ts
 
 type EntToEndUpdate a = CTime Time | CStage (Stage ForATime a)
+
+{-| Create a signal by chaining together Stages end-to-end.
+    The first argument (perhaps should be a -> Stage Forever a) -}
+
 endToEnd : Stage Forever a -> Signal (Stage ForATime a) -> Signal Time -> Signal a
 endToEnd (Stage _ gap) =
   let update u (x, t0, s, stages) =
