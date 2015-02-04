@@ -49,6 +49,7 @@ of a circle in an animation.
 
 -}
 
+import Stage.Internal as I
 import Queue
 import Signal
 import Time(Time)
@@ -58,22 +59,7 @@ import Debug
 modFloat : Float -> Float -> Float
 modFloat x m = x - m * toFloat (floor (x / m))
 
-type Duration = ForATime Time | Forever
-
-{-| A `Stage t a` is essentially a function `f : Time -> a` with
-an associated duration `dur` which indicates that `f` is
-meant to be considered as a function on the
-time interval [0, dur].
-
-The first type paramater `t` is `ForATime` if that duration
-is some finite time and is `Forever` if `f` is to be considered
-a total function.
-
-As an example, we might have a value 
-`circlePos : Stage ForATime (Float, Float)` indicating the position
-of a circle in an animation.
--}
-type Stage t a = Stage Duration (Time -> a)
+type alias Stage t a = I.Stage t a
 
 {-| A tag type indicating that a `Stage` is defined everywhere -}
 type Forever = ForeverDummy
@@ -82,11 +68,11 @@ type ForATime = ForATimeDummy
 
 {-| Create a total `Stage`, defined on all times. -}
 forever : (Time -> a) -> Stage Forever a
-forever f = Stage Forever f
+forever f = I.Stage I.Forever f
 
 {-| Create a `Stage` which runs for the specified duration -}
 for : Time -> (Time -> a) -> Stage ForATime a
-for dur f = Stage (ForATime dur) f
+for dur f = I.Stage (I.ForATime dur) f
 
 {-| A constant `Stage`.
 
@@ -104,7 +90,7 @@ stayForever x = forever (\_ -> x)
 
 {-| Get the last value the `Stage` takes on. -}
 finalValue : Stage ForATime a -> a
-finalValue (Stage (ForATime d) f) = f d
+finalValue (I.Stage (I.ForATime d) f) = f d
 
 {-| Speed up or slow down time by the given factor. E.g.,
 
@@ -113,22 +99,22 @@ finalValue (Stage (ForATime d) f) = f d
 is a `Stage` which lasts twice as long as `s` and proceeds half
 as fast -}
 dilate : Float -> Stage t a -> Stage t a
-dilate s (Stage dur f) =
+dilate s (I.Stage dur f) =
   let dur' =
     if s == 0
-    then Forever
-    else case dur of { ForATime t -> ForATime (t / s); _ -> dur }
-  in Stage dur' (\t -> f (s * t))
+    then I.Forever
+    else case dur of { I.ForATime t -> I.ForATime (t / s); _ -> dur }
+  in I.Stage dur' (\t -> f (s * t))
 
 {-| Repeat the given `Stage` forever. -}
 cycle : Stage ForATime a -> Stage Forever a
-cycle (Stage dur f) =
+cycle (I.Stage dur f) =
   case dur of
-    ForATime d -> Stage Forever (\t -> f (modFloat t d))
-    _          -> Debug.crash "The impossible happened: Stage.cycle"
+    I.ForATime d -> I.Stage I.Forever (\t -> f (modFloat t d))
+    _            -> Debug.crash "The impossible happened: Stage.cycle"
 
 map : (a -> b) -> Stage t a -> Stage t b
-map g (Stage dur f) = Stage dur (g << f)
+map g (I.Stage dur f) = I.Stage dur (g << f)
 
 sustain : Stage ForATime a -> Stage Forever a
 sustain st = st `followedBy` stayForever (finalValue st)
@@ -148,11 +134,11 @@ the interval `[0, 3]` and `"bye"` in the interval `(3, 4]`. Consider
 using the synonym `(<>)` from `Stage.Infix`.
 -}
 followedBy : Stage ForATime a -> Stage t a -> Stage t a
-followedBy (Stage dur1 f1) (Stage dur2 f2) =
+followedBy (I.Stage dur1 f1) (I.Stage dur2 f2) =
   case (dur1, dur2) of
-    (ForATime d1, Forever)     -> Stage Forever (mkF d1 f1 f2)
-    (ForATime d1, ForATime d2) -> Stage (ForATime (d1 + d2)) (mkF d1 f1 f2)
-    (Forever, _)               -> Debug.crash "The impossible happened: Stage.followedBy"
+    (I.ForATime d1, I.Forever)     -> I.Stage I.Forever (mkF d1 f1 f2)
+    (I.ForATime d1, I.ForATime d2) -> I.Stage (I.ForATime (d1 + d2)) (mkF d1 f1 f2)
+    (I.Forever, _)                 -> Debug.crash "The impossible happened: Stage.followedBy"
 
 {-| Create a sequence of two stages, giving the second access to the
 final value of the first. For example,
@@ -163,15 +149,15 @@ final value of the first. For example,
 Consider using the synonym `(+>)` from `Stage.Infix`.
 -}
 chainTo : Stage ForATime a -> (a -> Stage t a) -> Stage t a
-chainTo (Stage dur f) g =
+chainTo (I.Stage dur f) g =
   case dur of
-    ForATime d -> Stage dur f `followedBy` g (f d)
+    I.ForATime d -> I.Stage dur f `followedBy` g (f d)
     _          -> Debug.crash "The impossible happened: Stage.chainTo"
 
 {-| Convert a Signal of `Stage`s into a `Signal` by sampling using the given
 `Signal Time`. -}
 run : Signal (Stage Forever a) -> Signal Time -> Signal a
-run s ts = Signal.map2 (\(t0, Stage _ f) t -> f (t - t0)) (Time.timestamp s) ts
+run s ts = Signal.map2 (\(t0, I.Stage _ f) t -> f (t - t0)) (Time.timestamp s) ts
 
 type EntToEndUpdate a = CTime Time | CStage (Stage ForATime a)
 
@@ -179,13 +165,13 @@ type EntToEndUpdate a = CTime Time | CStage (Stage ForATime a)
     The first argument (perhaps should be a -> Stage Forever a) -}
 
 endToEnd : Stage Forever a -> Signal (Stage ForATime a) -> Signal Time -> Signal a
-endToEnd (Stage _ gap) =
+endToEnd (I.Stage _ gap) =
   let update u (x, t0, s, stages) =
-        let (Stage (ForATime d) f) = s in
+        let (I.Stage (I.ForATime d) f) = s in
         case u of
           CTime t -> if t - t0 < d then (f t, t0, s, stages) else case Queue.pop stages of
             Nothing            -> (gap t, t0, s, Queue.empty)
-            Just (s', stages') -> let (Stage _ g) = s' in (g t, t, s', stages')
+            Just (s', stages') -> let (I.Stage _ g) = s' in (g t, t, s', stages')
           CStage s' -> (x, t0, s, Queue.push s' stages) -- should really filter out this event
   in
   \ss ts ->
