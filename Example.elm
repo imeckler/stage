@@ -13,7 +13,7 @@ pos =  Stage.cycle
     <| Stage.for (3 * second) (\t -> t * (40 / second))
     +> \x -> Stage.for (1 * second) (\t -> x - t * (x / (1 * second)))
 
-main = Stage.run (Signal.constant pos) (Time.every 30)
+main = Stage.run (Time.every 30) (Signal.constant pos)
   |> Signal.map (\x -> filled Color.red (circle 20) |> moveX x)
   |> Signal.map (\form -> collage 300 300 [form])
 

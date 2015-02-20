@@ -156,8 +156,9 @@ chainTo (I.Stage dur f) g =
 
 {-| Convert a Signal of `Stage`s into a `Signal` by sampling using the given
 `Signal Time`. -}
-run : Signal (Stage Forever a) -> Signal Time -> Signal a
-run s ts = Signal.map2 (\(t0, I.Stage _ f) t -> f (t - t0)) (Time.timestamp s) ts
+run : Signal Time -> Signal (Stage Forever a) -> Signal a
+run ts s =
+  Signal.map2 (\(t0, I.Stage _ f) t -> f (t - t0)) (Signal.map2 (,) (Signal.sampleOn s ts) s) ts
 
 type EntToEndUpdate a = CTime Time | CStage (Stage ForATime a)
 
