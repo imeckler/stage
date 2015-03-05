@@ -1,5 +1,3 @@
 # Stage
 
-Functions for building and sequencing functions of time.
-
-The basic idea is explained in the docs, but for those  who like examples,  [here is one](https://github.com/imeckler/stage/blob/master/Example.elm).
+Stage has been renamed to Piece. Please see [piece](http://package.elm-lang.org/packages/imeckler/piece/1.0.0).
